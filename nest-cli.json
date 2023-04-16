@@ -162,6 +162,24 @@
       "compilerOptions": {
         "tsConfigPath": "libs/common/tsconfig.lib.json"
       }
+    },
+    "institute_management": {
+      "type": "application",
+      "root": "apps/institute_management",
+      "entryFile": "main",
+      "sourceRoot": "apps/institute_management/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/institute_management/tsconfig.app.json"
+      }
+    },
+    "auth": {
+      "type": "application",
+      "root": "apps/auth",
+      "entryFile": "main",
+      "sourceRoot": "apps/auth/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/auth/tsconfig.app.json"
+      }
     }
   }
 }

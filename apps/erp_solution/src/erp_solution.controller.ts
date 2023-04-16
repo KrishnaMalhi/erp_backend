@@ -3,10 +3,10 @@ import { ErpSolutionService } from './erp_solution.service';
 
 @Controller()
 export class ErpSolutionController {
-  constructor(private readonly erpSolutionService: ErpSolutionService) {}
+  constructor(private readonly erpSolutionService: ErpSolutionService) { }
 
   @Get()
-  getHello(): string {
+  getHello() {
     return this.erpSolutionService.getHello();
   }
 }
