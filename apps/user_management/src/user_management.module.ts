@@ -22,12 +22,12 @@ import { PermissionsModule } from './modules/permission.module';
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI),
     DatabaseModule,
-    RmqModule,
+    // RmqModule,
     UserModule,
     RoleModule,
     PermissionsModule
   ],
-  // controllers: [UserManagementController],
-  // providers: [UserManagementService],
+  // controllers: [UserController, RoleController, PermissionController],
+  // providers: [UserService, RoleService, PermissionService],
 })
 export class UserManagementModule { }

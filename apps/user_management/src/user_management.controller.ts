@@ -19,6 +19,4 @@ export class UserManagementController {
     console.log(a, b)
     return a + b;
   }
-
-
 }

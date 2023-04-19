@@ -1,0 +1,4 @@
+export const AUTH = "AUTH";
+export const USER_MANAGEMENT = "USER_MANAGEMENT";
+export const INSTITUTE_MANAGEMENT = "INSTITUTE_MANAGEMENT";
+

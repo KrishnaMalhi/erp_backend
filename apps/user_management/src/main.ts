@@ -4,6 +4,7 @@ import { AppCongiguration } from './config/app.config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { logger } from './utils/logger.utils';
+import { RmqService } from '@app/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(UserManagementModule, { logger });
@@ -14,6 +15,8 @@ async function bootstrap() {
       port: 6379,
     },
   })
+  // const rmqService = app.get<RmqService>(RmqService);
+  // app.connectMicroservice(rmqService.getOptions('erp'));
   const configService = app.get(ConfigService);
   AppCongiguration(app)
   await app.startAllMicroservices()

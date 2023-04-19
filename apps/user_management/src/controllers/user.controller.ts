@@ -5,6 +5,7 @@ import { CreateUserDto, DeleteUserDto, GetUserDto, UpdateUserDto, findAllUsersDt
 import { sendError, sendResponse } from "../utils/response.utils";
 import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { User } from "../schemas/user.schema";
+import { MessagePattern } from "@nestjs/microservices";
 
 
 @ApiTags('users')
@@ -13,11 +14,13 @@ export class UserController {
 
     constructor(private userService: UserService) { }
 
-    @Post()
+    // @Post()
+    @MessagePattern("createUser")
     @ApiResponse({ status: 201, type: User })
     @ApiBadRequestResponse({ description: 'Invalid data provided' })
     @ApiInternalServerErrorResponse({ description: 'Server error occurred' })
-    create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    create(createUserDto: CreateUserDto): Promise<User> {
+        console.log("user management cont: ", createUserDto)
         return this.userService.create(createUserDto);
     }
 

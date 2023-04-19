@@ -4,9 +4,10 @@ import { RmqContext, RmqOptions, Transport } from '@nestjs/microservices';
 
 @Injectable()
 export class RmqService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) { }
 
   getOptions(queue: string, noAck = false): RmqOptions {
+    console.log("queue", queue)
     return {
       transport: Transport.RMQ,
       options: {
@@ -21,6 +22,7 @@ export class RmqService {
   ack(context: RmqContext) {
     const channel = context.getChannelRef();
     const originalMessage = context.getMessage();
+    console.log("originalMessage", originalMessage)
     channel.ack(originalMessage);
   }
 }
