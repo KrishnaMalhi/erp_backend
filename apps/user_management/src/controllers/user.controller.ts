@@ -1,11 +1,21 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Put, Query, Req, Res } from "@nestjs/common";
+import { HttpResponseCode, HttpResponseMessage, sendResponse, sendError } from '@app/common/utils/response.utils';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Put,
+    UsePipes,
+    ValidationPipe,
+    ParseIntPipe,
+    Query
+} from '@nestjs/common';
+import { ApiTags } from "@nestjs/swagger";
+import { AuthenticateUserDto, CreateUserDto, ResetPasswordDto, UpdateUserDto } from "../dto/user.dto";
 import { UserService } from "../services/user.service";
-import { logger } from "../utils/logger.utils";
-import { CreateUserDto, DeleteUserDto, GetUserDto, UpdateUserDto, findAllUsersDto } from "../dto/user.dto";
-import { sendError, sendResponse } from "../utils/response.utils";
-import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { User } from "../schemas/user.schema";
-import { MessagePattern } from "@nestjs/microservices";
+import { MessagePattern } from '@nestjs/microservices';
 
 
 @ApiTags('users')
@@ -14,54 +24,147 @@ export class UserController {
 
     constructor(private userService: UserService) { }
 
-    // @Post()
-    @MessagePattern("createUser")
-    @ApiResponse({ status: 201, type: User })
-    @ApiBadRequestResponse({ description: 'Invalid data provided' })
-    @ApiInternalServerErrorResponse({ description: 'Server error occurred' })
-    create(createUserDto: CreateUserDto): Promise<User> {
-        console.log("user management cont: ", createUserDto)
-        return this.userService.create(createUserDto);
-    }
+    @Get("/getAll")
+    @UsePipes(ValidationPipe)
+    async findAll() {
 
-    @Put(':id')
-    @ApiResponse({ status: 200, type: User })
-    @ApiNotFoundResponse({ description: 'User not found' })
-    @ApiBadRequestResponse({ description: 'Invalid data provided' })
-    @ApiInternalServerErrorResponse({ description: 'Server error occurred' })
-    update(@Param() getUserDto: GetUserDto, @Body() updateUserDto: UpdateUserDto): Promise<User> {
-        return this.userService.update(getUserDto.id, updateUserDto);
-    }
-
-    @Get(':id')
-    @ApiResponse({ status: 200, type: User })
-    @ApiNotFoundResponse({ description: 'User not found' })
-    @ApiInternalServerErrorResponse({ description: 'Server error occurred' })
-    get(@Param() getUserDto: GetUserDto): Promise<User> {
-        return this.userService.get(getUserDto.id);
-    }
-
-    @Delete(':id')
-    @ApiResponse({ status: 200 })
-    @ApiNotFoundResponse({ description: 'User not found' })
-    @ApiInternalServerErrorResponse({ description: 'Server error occurred' })
-    delete(@Param() deleteUserDto: DeleteUserDto): Promise<void> {
-        return this.userService.delete(deleteUserDto.id);
-    }
-
-    @Get("getAllUsers")
-    async findAllUsers(@Query() findAllUsersDto: findAllUsersDto, @Res() res: Response, @Req() req: Request) {
         try {
-            logger.log("IN - findAllUsers controller!")
-            // console.log(req)
-            const response = await this.userService.findAllUsers(findAllUsersDto)
-            logger.log("OUT - findAllUsers controller!")
-            return sendResponse(res, req, response, "success", true, 200)
+            const response = await this.userService.findAll();
+            return sendResponse(response, HttpResponseMessage.OK, true, HttpResponseCode.OK)
         } catch (error) {
-            logger.error(`ERROR - findAllUsers controller - ${error.message}`)
-            return sendError(res, req, {}, error, 500);
-            // throw new Error(`ERROR - findAllUsers findAllUsers controller - ${error.message}`)
-            // throw new AllExceptionsFilter(error)
+            console.log(error)
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Get('/getById')
+    async findById(@Query('id', ParseIntPipe) id: number) {
+        try {
+            const response = await this.userService.findById(id);
+            if (!response) {
+                return sendResponse(response, HttpResponseMessage.NOT_FOUND, false, HttpResponseCode.NOT_FOUND)
+            }
+            return sendResponse(response, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+        } catch (error) {
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @MessagePattern("auth.verifyCredentials")
+    @Get('/getByEmail')
+    async findByEmail(@Query('email') email: string) {
+        try {
+            const response = await this.userService.findByEmail(email);
+            if (!response) {
+                return sendResponse(response, HttpResponseMessage.NOT_FOUND, false, HttpResponseCode.NOT_FOUND)
+            }
+            return sendResponse(response, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+        } catch (error) {
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @MessagePattern("createUser")
+    @Post("/create")
+    async create(@Body() createUserDto: CreateUserDto) {
+        try {
+            const response = await this.userService.create(createUserDto);
+            if (!response) {
+                return sendResponse(response, HttpResponseMessage.NOT_FOUND, false, HttpResponseCode.NOT_FOUND)
+            }
+            return sendResponse({}, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+        } catch (error) {
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Put('/updateById')
+    async update(
+        @Query('id', ParseIntPipe) id: number,
+        @Body() updateUserDto: UpdateUserDto,
+    ) {
+        try {
+            const response = await this.userService.update(id, updateUserDto);
+            if (!response) {
+                return sendResponse(response, HttpResponseMessage.NOT_FOUND, false, HttpResponseCode.NOT_FOUND)
+            }
+            return sendResponse({}, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+        } catch (error) {
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Delete('/deleteById')
+    async delete(@Query('id', ParseIntPipe) id: number) {
+        try {
+            const response = await this.userService.delete(id);
+            if (response.affected === 0) {
+                return sendResponse(response, HttpResponseMessage.NOT_FOUND, false, HttpResponseCode.NOT_FOUND)
+            }
+            return sendResponse(response, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+        } catch (error) {
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Post("/resetPassword")
+    async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+        try {
+            const response = await this.userService.resetPassword(resetPasswordDto);
+            if (!response) {
+                return sendResponse(response, HttpResponseMessage.NOT_FOUND, false, HttpResponseCode.NOT_FOUND)
+            }
+            return sendResponse({}, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+        } catch (error) {
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @MessagePattern("authenticateUser")
+    @Post("/authenticate")
+    async authenticateUser(@Body() authenticateUserDto: AuthenticateUserDto) {
+        try {
+
+            const response = await this.userService.authenticateUser(authenticateUserDto);
+            console.log("response: ", response)
+            // if (!response) {
+            //     return sendResponse(response, HttpResponseMessage.NOT_FOUND, false, HttpResponseCode.NOT_FOUND)
+            // }
+            return sendResponse(response, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+        } catch (error) {
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Post('/assignRole')
+    async assignRoleToUser(
+        @Query('userId', ParseIntPipe) userId: number,
+        @Query('roleId', ParseIntPipe) roleId: number,
+    ) {
+        try {
+            const response = await this.userService.assignRoleToUser(userId, roleId);
+            if (!response) {
+                return sendResponse(response, HttpResponseMessage.NOT_FOUND, false, HttpResponseCode.NOT_FOUND)
+            }
+            return sendResponse({}, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+        } catch (error) {
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Delete('/deleteRole')
+    async removeRoleFromUser(
+        @Query('userId', ParseIntPipe) userId: number,
+        @Query('roleId', ParseIntPipe) roleId: number,
+    ) {
+        try {
+            const response = await this.userService.removeRoleFromUser(userId, roleId);
+            if (!response) {
+                return sendResponse(response, HttpResponseMessage.NOT_FOUND, false, HttpResponseCode.NOT_FOUND)
+            }
+            return sendResponse({}, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+        } catch (error) {
+            return sendError({}, HttpResponseMessage.INTERNAL_SERVER_ERROR, HttpResponseCode.INTERNAL_SERVER_ERROR);
         }
     }
 }

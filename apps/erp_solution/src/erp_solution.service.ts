@@ -1,11 +1,15 @@
+import { AUTH_SERVICE } from '@app/common/auth/services';
+import { USER_MANAGEMENT } from '@app/common/utils/services.constant.utils';
 import { Body, Inject, Injectable, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { USER_MANAGEMENT } from './constants/services';
 import { Request } from 'express';
 
 @Injectable()
 export class ErpSolutionService {
-  constructor(@Inject(USER_MANAGEMENT) private readonly userManagementClient: ClientProxy) { }
+  constructor(
+    @Inject(USER_MANAGEMENT) private readonly userManagementClient: ClientProxy,
+    @Inject(AUTH_SERVICE) private readonly authClient: ClientProxy
+  ) { }
   async getHello(): Promise<string> { // need to use async because we need to wait recieved data
 
     let recieve = await this.userManagementClient.send<number>("notify", { user: "Ali", data: { a: 1, b: 2 } }).toPromise();// notify if mapped key will used to in other hand 
@@ -15,14 +19,11 @@ export class ErpSolutionService {
   }
 
   async createUser(request: Request) {
-    try {
-      console.log("erp sol serv: ", request)
-      const user = await this.userManagementClient.send('createUser', {
-        request,
-      })
-      return user;
-    } catch (error) {
-
-    }
+    const user = await this.userManagementClient.emit('createUser', request)
+    return user;
+  }
+  async loginUser(request: Request) {
+    const user = await this.authClient.emit('auth.login', request)
+    return user;
   }
 }

@@ -1,7 +1,6 @@
-// import { Document } from "mongoose";
 
-export interface IPermission {
-    // id: string;
+export interface PermissionInterface {
+    id: number;
     name: string;
     description: string;
     type: string;

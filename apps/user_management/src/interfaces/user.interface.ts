@@ -1,9 +1,7 @@
-// import { Document } from 'mongoose';
-// import { UserDocument } from '../schemas/user.schema';
-// import { Role } from '../schemas/role.schema';
 
-export interface IUser {
-    id: string;
+export interface UserInterface {
+    id: number;
+    channel: string;
     first_name: string;
     last_name: string;
     mobile_number: string;
@@ -16,5 +14,6 @@ export interface IUser {
     institute_id: string;
     created_at: Date;
     updated_at: Date;
-    role: string;
+    deleted_at: Date;
+    role: number;
 }

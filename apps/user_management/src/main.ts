@@ -4,41 +4,18 @@ import { AppCongiguration } from './config/app.config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { logger } from './utils/logger.utils';
-import { RmqService } from '@app/common';
+import { RedisService } from '@app/common/redis/redis.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(UserManagementModule, { logger });
+  const redisService = app.get<RedisService>(RedisService);
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.REDIS,
-    options: {
-      host: 'localhost',
-      port: 6379,
-    },
+    options: { ...redisService }
   })
-  // const rmqService = app.get<RmqService>(RmqService);
-  // app.connectMicroservice(rmqService.getOptions('erp'));
-  const configService = app.get(ConfigService);
   AppCongiguration(app)
+  const configService = app.get(ConfigService);
   await app.startAllMicroservices()
   await app.listen(configService.get('PORT'));
 }
 bootstrap();
-
-// const app = await NestFactory.createMicroservice<MicroserviceOptions>(UserManagementModule, {
-
-//   transport: Transport.REDIS,
-//   options: {
-//     host: 'localhost',
-//     port: 6379,
-//   },
-// });
-
-
-// app.connectMicroservice<MicroserviceOptions>({
-//   transport: Transport.REDIS,
-//   options: {
-//     host: 'localhost',
-//     port: 6379,
-//   },
-// })
-// await app.startAllMicroservices()

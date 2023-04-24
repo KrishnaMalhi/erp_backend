@@ -1,37 +1,49 @@
-import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
-import { EventPattern, MessagePattern } from '@nestjs/microservices';
-import { Response } from 'express';
+import { Body, Controller, Post } from '@nestjs/common';
+import { EventPattern, Payload } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
-import { CurrentUser } from './current-user.decorator';
-import JwtAuthGuard from './guards/jwt-auth.guard';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-// import { User } from './users/schemas/user.schema';
+import { ApiTags } from '@nestjs/swagger';
+import { HttpResponseCode, HttpResponseMessage, sendError, sendResponse } from '@app/common/utils/response.utils';
 
-@Controller('auth')
+
+@ApiTags("auth")
+@Controller("/auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private readonly authService: AuthService,
+  ) { }
 
-  @EventPattern('auth.login')
-  async handleLogin(data: any) {
-    // Handle user login request
-    const result = await this.authService.login(data.username, data.password);
-    if (!result) {
-      throw new Error('Unauthorized');
-    }
-    // Send JWT to microservice via RabbitMQ queue
-    await this.authService.sendToken(result.token);
-  }
-
-  @MessagePattern('auth.validateToken')
-  async handleValidateToken(token: string) {
-    // Validate JWT token
-    const decoded = await this.authService.validateToken(token);
-
-    // Return user data if token is valid
-    if (decoded) {
-      return decoded.user;
-    } else {
-      throw new Error('Invalid token');
+  @EventPattern('login')
+  @Post("/login")
+  async login(@Body() payload: any) {
+    try {
+      const token = await this.authService.login(payload);
+      console.log("token: ", token)
+      // return { token };
+      if (!token) {
+        return sendResponse(token, HttpResponseMessage.UNAUTHORIZED, false, HttpResponseCode.UNAUTHORIZED)
+      }
+      return sendResponse(token, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+    } catch (error) {
+      console.log(error)
+      return sendError({}, error.message, error.code);
     }
   }
+
+  @EventPattern('singUp')
+  @Post("/signUp")
+  async signUp(@Body() payload: any) {
+    // try {
+    return await this.authService.signUp(payload);
+    //   console.log("token: ", token)
+    //   // return { token };
+    //   if (!token) {
+    //     return sendResponse(token, HttpResponseMessage.UNAUTHORIZED, false, HttpResponseCode.UNAUTHORIZED)
+    //   }
+    //   return sendResponse(token, HttpResponseMessage.OK, true, HttpResponseCode.OK)
+    // } catch (error) {
+    //   console.log(error)
+    //   return sendError({}, error.message, error.code);
+    // }
+  }
+
 }

@@ -1,140 +1,103 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Exclude } from "class-transformer";
 import { IsEmail, IsMobilePhone, IsNotEmpty, IsOptional, IsString } from "class-validator"
 // import { Role } from "../schemas/role.schema";
 
 
 export class CreateUserDto {
-    @ApiProperty()
+    @ApiProperty({ example: 'Jane' })
     @IsNotEmpty()
     @IsString()
     first_name: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'Doe' })
     @IsNotEmpty()
     @IsString()
     last_name: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: '03363598202' })
     @IsNotEmpty()
     @IsString()
     mobile_number: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'janedoe' })
     @IsNotEmpty()
     @IsString()
     username: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'Janedoe@example.com' })
     @IsNotEmpty()
     @IsString()
     @IsEmail({}, { message: "Please enter correct email" })
     email: string;
+
+    @ApiProperty({ example: 'password' })
+    @IsNotEmpty()
+    @IsString()
+    password: string;
+
+    @ApiProperty({ example: 1 })
+    @IsNotEmpty()
+    @IsString()
+    institute_id: string;
+}
+
+export class UpdateUserDto {
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    first_name?: string;
+
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    last_name?: string;
+
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    mobile_number?: string;
+
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    username?: string;
+
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    email?: string;
+    // @IsEmail({}, { message: "Please enter correct email" })
+
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    institute_id?: string;
+}
+
+export class AuthenticateUserDto {
+
+    @ApiProperty()
+    @IsEmail({}, { message: "Please enter correct email" })
+    @IsNotEmpty()
+    @IsString()
+    email?: string;
 
     @ApiProperty()
     @IsNotEmpty()
     @IsString()
     password: string;
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    institute_id: string;
-
-    @ApiProperty()
-    roles: string;
 }
 
-export class UpdateUserDto {
+export class ResetPasswordDto {
     @ApiProperty()
-    // @IsNotEmpty()
-    @IsString()
-    first_name?: string;
-
-    @ApiProperty()
-    // @IsNotEmpty()
-    @IsString()
-    last_name?: string;
-
-    @ApiProperty()
-    // @IsNotEmpty()
-    @IsString()
-    mobile_number?: string;
-
-    @ApiProperty()
-    // @IsNotEmpty()
-    @IsString()
-    username?: string;
-
-    @ApiProperty()
-    // @IsNotEmpty()
-    @IsString()
     @IsEmail({}, { message: "Please enter correct email" })
+    @IsNotEmpty()
+    @IsString()
     email?: string;
 
-    // @ApiProperty()
-    // @IsNotEmpty()
-    // @IsString()
-    // password: string;
-
-    @ApiProperty()
-    // @IsNotEmpty()
-    @IsString()
-    institute_id?: string;
-
-    @ApiProperty()
-    roles?: string;
-}
-
-export class getUserByEmailIdMobileInstitute {
-    @ApiProperty()
+    @ApiProperty({ example: 'password' })
     @IsNotEmpty()
     @IsString()
-    _id: string;
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    mobile_number: string;
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    username: string;
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    @IsEmail({}, { message: "Please enter correct email" })
-    email: string;
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    institute_id: string;
-}
-
-export class GetUserDto {
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    id: string;
-}
-
-export class DeleteUserDto {
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    id: string;
-}
-
-export class findAllUsersDto {
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    _id: String;
-
-    @ApiProperty()
-    @IsOptional()
-    @IsString()
-    role: String;
+    password: string;
 }

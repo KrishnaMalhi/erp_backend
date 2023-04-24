@@ -1,90 +1,107 @@
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
-import { User } from "../schemas/user.schema";
-import { CreateUserDto, UpdateUserDto, findAllUsersDto } from "../dto/user.dto";
-import { logger } from "../utils/logger.utils";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
-import { bcryptEncryption } from "@app/common/utils/common";
+import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm'
+import { AuthenticateUserDto, CreateUserDto, ResetPasswordDto, UpdateUserDto } from "../dto/user.dto";
+import { User } from "../entities/user.entity";
+import { Role } from "../entities/role.entity";
+import { bcryptEncryption, bcryptEncryptionComparision } from '../utils/common.utils';
 
 
 
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel('User') private userModel: Model<User>) { }
+    constructor(
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
+        @InjectRepository(Role)
+        private readonly roleRepository: Repository<Role>,
+    ) { }
+
+    async findAll(): Promise<User[]> {
+        return await this.userRepository.find({
+            relations: ['role'],
+        });
+    }
+
+    async findById(id: number): Promise<User> {
+        return await this.userRepository.findOne({ where: { id }, relations: ['role'] });
+    }
+
+    async findByEmail(email: string): Promise<User> {
+        return await this.userRepository.findOne({ where: { email }, relations: ['role'] });
+    }
 
     async create(createUserDto: CreateUserDto): Promise<User> {
         const hashedPassword = await bcryptEncryption(createUserDto.password);
         createUserDto.password = hashedPassword;
-        const createdUser = await new this.userModel(createUserDto);
-        return createdUser.save();
+        return await this.userRepository.save(createUserDto);
     }
 
-    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-        const updatedUser = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true }).exec();
-        if (!updatedUser) {
-            throw new NotFoundException('User not found');
-        }
-        return updatedUser;
+    async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+        const user = await this.userRepository.preload({
+            id,
+            ...updateUserDto,
+        });
+        return await this.userRepository.save(user);
     }
 
-    async get(id: string): Promise<User> {
-        const user = await this.userModel.findById(id).exec();
+    async delete(id: number) {
+        return await this.userRepository.delete(id);
+    }
+
+    async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { email: resetPasswordDto.email } });
         if (!user) {
-            throw new NotFoundException('User not found');
+            return user;
+        }
+        const hashedPassword = await bcryptEncryption(resetPasswordDto.password);
+        user.password = hashedPassword;
+        return await this.userRepository.save(user);
+    }
+
+    async authenticateUser(authenticateUserDto: AuthenticateUserDto): Promise<User | Boolean> {
+        const user = await this.userRepository.findOne({ where: { email: authenticateUserDto.email } });
+        if (!user) {
+            throw new NotFoundException("Invalid username or password")
+            return false;
+        }
+        const comparePass = await bcryptEncryptionComparision(authenticateUserDto.password, user.password)
+        if (!comparePass) {
+            throw new NotFoundException("Invalid username or password")
+            return false
         }
         return user;
     }
-    async findUserByEmail(email: string): Promise<User> {
-        return this.userModel.findOne({ email });
-    }
-    async delete(id: string): Promise<void> {
-        const result = await this.userModel.deleteOne({ _id: id }).exec();
-        if (result.deletedCount === 0) {
-            throw new NotFoundException('User not found');
-        }
-    }
 
-    async authenticate(email: string, password: string): Promise<User> {
-        const user = await this.userModel.findOne({ email, password }).exec();
+    async assignRoleToUser(userId: number, roleId: number): Promise<User | Role> {
+        const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['role'] });
         if (!user) {
-            throw new UnauthorizedException('Invalid email or password');
+            return user
         }
-        return user;
+        const role = await this.roleRepository.findOne({ where: { id: roleId } });
+        if (!role) {
+            return role
+        }
+        const assignedRole = await new Role()
+        assignedRole.id = roleId;
+        const id = assignedRole
+        user.role = id
+
+        return await this.userRepository.save(user);
     }
 
-    async assignRole(userId: string, roleId: string): Promise<User> {
-        const user = await this.userModel.findById(userId).exec();
+    async removeRoleFromUser(userId: number, roleId: number): Promise<User | Role> {
+        const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['role'] });
         if (!user) {
-            throw new NotFoundException('User not found');
+            return user
         }
-        user.roles = roleId;
-        return user.save();
-    }
-
-    async findAllUsers(findAllUsersDto: findAllUsersDto) {
-        const { _id, role } = findAllUsersDto
-        try {
-            logger.log("IN - findAllUsers service!")
-
-            logger.log("_id: ", _id)
-            const isSuperUser = await this.userModel.findOne({ _id, role })
-
-            if (!isSuperUser) {
-                throw new Error(`ERROR - findAllUsers database query - ${isSuperUser}`)
-            }
-
-            const response = await this.userModel.find()
-            logger.log("response: ", response)
-
-
-            logger.log("OUT - findAllUsers service!")
-
-            return response
-        } catch (error) {
-            logger.error(`ERROR - findAllUsers service - ${error.message}`)
-            throw new Error(`ERROR - findAllUsers service - ${error.message}`)
-            // throw new AllExceptionsFilter(error)
+        const role = await this.roleRepository.findOne({ where: { id: roleId } });
+        if (!role) {
+            return role
         }
+        user.role = null;
+
+        return this.userRepository.save(user);
     }
 }

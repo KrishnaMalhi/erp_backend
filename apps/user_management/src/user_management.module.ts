@@ -1,33 +1,41 @@
 import { Module } from '@nestjs/common';
-import { UserManagementController } from './user_management.controller';
-import { UserManagementService } from './user_management.service';
 import { ConfigModule } from '@nestjs/config';
-import * as Joi from 'joi';
-import { DatabaseModule, RmqModule } from '@app/common';
-import { UserModule } from './modules/user.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { RoleModule } from './modules/role.module';
 import { PermissionsModule } from './modules/permission.module';
-// import { logger } from './utils/logger.utils';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { typeOrmAsyncConfig } from './config/typeORM.config';
+import { RoleModule } from './modules/role.module';
+import { UserModule } from './modules/user.module';
+import { RedisModule } from '@app/common/redis/redis.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      validationSchema: Joi.object({
-        MONGODB_URI: Joi.string().required(),
-        PORT: Joi.number().required(),
-      }),
-      envFilePath: './apps/user_management/.env',
-    }),
-    MongooseModule.forRoot(process.env.MONGODB_URI),
-    DatabaseModule,
-    // RmqModule,
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: './apps/user_management/.env', }),
+    TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
     UserModule,
     RoleModule,
-    PermissionsModule
+    PermissionsModule,
+    RedisModule
   ],
+})
+export class UserManagementModule {
+  // constructor(private dataSource: DataSource) { }
+}
+
+// ConfigModule.forRoot({
+//   isGlobal: true,
+//   validationSchema: Joi.object({
+
+//     DB_HOST: Joi.string().required(),
+//     DB_PORT: Joi.number().required(),
+//     DB_USERNAME: Joi.string().required(),
+//     // DB_PASSWORD: Joi.string(),
+//     DB_NAME: Joi.string().required(),
+//     SYNCHRONIZE: Joi.boolean().required()
+//   }),
+//   envFilePath: './apps/user_management/.env',
+// }),
+// MongooseModule.forRoot(process.env.MONGODB_URI),
+// DatabaseModule,
+// RmqModule,
   // controllers: [UserController, RoleController, PermissionController],
   // providers: [UserService, RoleService, PermissionService],
-})
-export class UserManagementModule { }

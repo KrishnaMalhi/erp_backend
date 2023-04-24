@@ -1,29 +1,26 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsOptional, IsString } from "class-validator";
-// import { Permissions } from "../schemas/permissions.schema";
 
 export class CreateRoleDto {
-    @ApiProperty()
+    @ApiProperty({ example: 'Admin' })
     @IsNotEmpty()
     @IsString()
     name: string;
 
-    @ApiProperty()
+    @ApiProperty({ example: 'Role to user' })
     @IsOptional()
     @IsString()
     description: string;
 
-    // @ApiProperty()
-    // @IsNotEmpty()
-    // @IsString()
-    // created_by: string;
-    @ApiProperty()
-    permissions: string[];
+    @ApiProperty({ example: 'Jane Doe' })
+    @IsNotEmpty()
+    @IsString()
+    created_by: string;
 }
 
 export class UpdateRoleDto {
     @ApiProperty()
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     name?: string;
 
@@ -34,25 +31,6 @@ export class UpdateRoleDto {
 
     @ApiProperty()
     @IsString()
-    created_by?: string;
-
-    @ApiProperty()
-    permissions?: string[];
-}
-
-// export class GetAllRoles {
-// }
-
-export class GetRoleDto {
-    @ApiProperty()
     @IsNotEmpty()
-    @IsString()
-    id: string;
-}
-
-export class DeleteRoleDto {
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    id: string;
+    last_modified_by: string;
 }
